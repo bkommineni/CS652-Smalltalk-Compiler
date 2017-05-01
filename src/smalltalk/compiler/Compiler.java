@@ -74,12 +74,14 @@ public class Compiler {
 
 	public STBlock createBlock(STMethod currentMethod, ParserRuleContext tree) {
 //		System.out.println("create block in "+currentMethod+" "+args);
-		return null;
+		STBlock stBlock = new STBlock(currentMethod,tree);
+		return stBlock;
 	}
 
 	public STMethod createMethod(String selector, ParserRuleContext tree) {
 //		System.out.println("	create method "+selector+" "+args);
-		return null;
+		STMethod stMethod = new STMethod(selector,tree);
+		return stMethod;
 	}
 
 	public STPrimitiveMethod createPrimitiveMethod(STClass currentClass,
@@ -90,7 +92,8 @@ public class Compiler {
 //		System.out.println("	create primitive "+selector+" "+args+"->"+primitiveName);
 		// convert "<classname>_<methodname>" Primitive value
 		// warn if classname!=currentClass
-		return null;
+		STPrimitiveMethod primitiveMethod = new STPrimitiveMethod(selector,tree,primitiveName);
+		return primitiveMethod;
 	}
 
 
