@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import static smalltalk.compiler.misc.Utils.floatToBytes;
+import static smalltalk.compiler.misc.Utils.intToBytes;
+
 public class Compiler {
 	protected STSymbolTable symtab;
 	protected SmalltalkParser parser;
@@ -128,9 +131,29 @@ public class Compiler {
 	public static Code push_nil() 				{ return Code.of(Bytecode.NIL); }
 	public static Code push_self()				{ return Code.of(Bytecode.SELF); }
 	public static Code method_return()          { return Code.of(Bytecode.RETURN); }
-
-	public static Code dbg(int filenameLitIndex, int line, int charPos) {
-		return null;
+	public static Code push_int(int x)
+	{
+		return Code.of(Bytecode.PUSH_INT).join(intToBytes(x));
+	}
+	public static Code push_float(float x)
+	{
+		return Code.of(Bytecode.PUSH_FLOAT).join(floatToBytes(x));
+	}
+	public static Code push_field(int index)
+	{
+		return Code.of(Bytecode.PUSH_FIELD).join(intToBytes(index));
+	}
+	public static Code store_field(int index)
+	{
+		return Code.of(Bytecode.STORE_FIELD).join(intToBytes(index));
+	}
+	public static Code push_local(int context,int index)
+	{
+		return Code.of(Bytecode.STORE_FIELD).join(intToBytes(context)).join(intToBytes(index));
+	}
+	public static Code store_local(int context,int index)
+	{
+		return Code.of(Bytecode.STORE_FIELD).join(intToBytes(context)).join(intToBytes(index));
 	}
 
 	public String getFileName() {

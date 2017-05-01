@@ -84,63 +84,44 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	 localVars? expr ('.' expr)* '.'?
 	 */
 	@Override
-	public Code visitFullBody(SmalltalkParser.FullBodyContext ctx) {
+	public Code visitFullBody(SmalltalkParser.FullBodyContext ctx)
+	{
 		// fill in
 		return null;
 	}
 
 	@Override
-	public Code visitReturn(SmalltalkParser.ReturnContext ctx) {
+	public Code visitReturn(SmalltalkParser.ReturnContext ctx)
+	{
 		Code e = visit(ctx.messageExpression());
-		if ( compiler.genDbg ) {
-			e = Code.join(e, dbg(ctx.start)); // put dbg after expression as that is when it executes
-		}
 		Code code = e.join(Compiler.method_return());
 		return code;
 	}
 
-	public void pushScope(Scope scope) {
+
+
+	public void pushScope(Scope scope)
+	{
 		currentScope = scope;
 	}
 
-	public void popScope() {
-//		if ( currentScope.getEnclosingScope()!=null ) {
-//			System.out.println("popping from " + currentScope.getScopeName() + " to " + currentScope.getEnclosingScope().getScopeName());
-//		}
-//		else {
-//			System.out.println("popping from " + currentScope.getScopeName() + " to null");
-//		}
+	public void popScope()
+	{
 		currentScope = currentScope.getEnclosingScope();
 	}
 
-	public int getLiteralIndex(String s) {
+	public int getLiteralIndex(String s)
+	{
 		return 0;
 	}
 
-	public Code dbgAtEndMain(Token t) {
-		int charPos = t.getCharPositionInLine() + t.getText().length();
-		return dbg(t.getLine(), charPos);
-	}
-
-	public Code dbgAtEndBlock(Token t) {
-		int charPos = t.getCharPositionInLine() + t.getText().length();
-		charPos -= 1; // point at ']'
-		return dbg(t.getLine(), charPos);
-	}
-
-	public Code dbg(Token t) {
-		return dbg(t.getLine(), t.getCharPositionInLine());
-	}
-
-	public Code dbg(int line, int charPos) {
-		return Compiler.dbg(getLiteralIndex(compiler.getFileName()), line, charPos);
-	}
-
-	public Code store(String id) {
+	public Code store(String id)
+	{
 		return null;
 	}
 
-	public Code push(String id) {
+	public Code push(String id)
+	{
 		return null;
 	}
 
