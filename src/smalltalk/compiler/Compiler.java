@@ -2,6 +2,7 @@ package smalltalk.compiler;
 
 import org.antlr.symtab.Scope;
 import org.antlr.symtab.VariableSymbol;
+import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -20,8 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import static smalltalk.compiler.misc.Utils.floatToBytes;
-import static smalltalk.compiler.misc.Utils.intToBytes;
+import static smalltalk.compiler.misc.Utils.*;
 
 public class Compiler {
 	protected STSymbolTable symtab;
@@ -42,6 +42,12 @@ public class Compiler {
 	}
 
 	public STSymbolTable compile(String fileName, String input) {
+		ParserRuleContext tree = parseClasses(new ANTLRInputStream(input));
+		if ( tree!=null ) {
+			defSymbols(tree);
+			resolveSymbols(tree);
+		}
+		codeGen(tree);
 		return symtab;
 	}
 
@@ -51,7 +57,7 @@ public class Compiler {
 	public ParserRuleContext parseClasses(CharStream input) {
 		SmalltalkLexer l = new SmalltalkLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(l);
-		//System.out.println(tokens.getTokens());
+		System.out.println(tokens.getTokens());
 
 		this.parser = new SmalltalkParser(tokens);
 		fileTree= parser.file();
@@ -73,6 +79,12 @@ public class Compiler {
 		ResolveSymbols def = new ResolveSymbols(this);
 		ParseTreeWalker walker = new ParseTreeWalker();
 		walker.walk(def, tree);
+	}
+
+	public void codeGen(ParserRuleContext tree)
+	{
+		CodeGenerator codegen = new CodeGenerator(this);
+		codegen.visit(tree);
 	}
 
 	public STBlock createBlock(STMethod currentMethod, ParserRuleContext tree) {
@@ -141,19 +153,41 @@ public class Compiler {
 	}
 	public static Code push_field(int index)
 	{
-		return Code.of(Bytecode.PUSH_FIELD).join(intToBytes(index));
+		return Code.of(Bytecode.PUSH_FIELD).join(shortToBytes(index));
 	}
 	public static Code store_field(int index)
 	{
-		return Code.of(Bytecode.STORE_FIELD).join(intToBytes(index));
+		return Code.of(Bytecode.STORE_FIELD).join(shortToBytes(index));
 	}
 	public static Code push_local(int context,int index)
 	{
-		return Code.of(Bytecode.STORE_FIELD).join(intToBytes(context)).join(intToBytes(index));
+		return Code.of(Bytecode.PUSH_LOCAL).join(shortToBytes(context)).join(shortToBytes(index));
 	}
 	public static Code store_local(int context,int index)
 	{
-		return Code.of(Bytecode.STORE_FIELD).join(intToBytes(context)).join(intToBytes(index));
+		return Code.of(Bytecode.STORE_FIELD).join(shortToBytes(context)).join(shortToBytes(index));
+	}
+	public static Code push_literal(int literalIndex)
+	{
+		return Code.of(Bytecode.PUSH_LITERAL).join(toLiteral(literalIndex));
+	}
+	public static Code push_global(int globalIndex)
+	{
+		Code code = Code.of(Bytecode.PUSH_GLOBAL).join(toLiteral(globalIndex));
+		return code;
+	}
+	public static Code send(int nargs,int keywordIdx)
+	{
+		Code code = Code.of(Bytecode.SEND).join(shortToBytes(nargs)).join(toLiteral(keywordIdx));
+		return code;
+	}
+	public static Code pop()
+	{
+		return Code.of(Bytecode.POP);
+	}
+	public static Code block(int blocknum)
+	{
+		return Code.of(Bytecode.BLOCK).join(shortToBytes(blocknum));
 	}
 
 	public String getFileName() {

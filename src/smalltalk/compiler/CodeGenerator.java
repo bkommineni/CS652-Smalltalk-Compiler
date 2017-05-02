@@ -7,10 +7,7 @@ import org.antlr.symtab.Utils;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import smalltalk.compiler.symbols.STBlock;
-import smalltalk.compiler.symbols.STClass;
-import smalltalk.compiler.symbols.STCompiledBlock;
-import smalltalk.compiler.symbols.STPrimitiveMethod;
+import smalltalk.compiler.symbols.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +71,22 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		return compiledMethod;
 	}
 
+	@Override
+	public Code visitMain(SmalltalkParser.MainContext ctx) {
+		currentScope = ctx.scope;
+		currentClassScope = ctx.classScope;
+		pushScope(ctx.scope);
+		Code code = visitChildren(ctx);
+		STCompiledBlock block = new STCompiledBlock(currentClassScope,(STBlock) currentScope);
+		ctx.scope.compiledBlock = block;
+		popScope();
+		code = aggregateResult(code,Compiler.pop());
+		code = aggregateResult(code,Compiler.push_self());
+		code = aggregateResult(code,Compiler.method_return());
+		ctx.scope.compiledBlock.bytecode = code.bytes();
+		return code;
+	}
+
 	/**
 	 All expressions have values. Must pop each expression value off, except
 	 last one, which is the block return value. Visit method for blocks will
@@ -87,7 +100,12 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	public Code visitFullBody(SmalltalkParser.FullBodyContext ctx)
 	{
 		// fill in
-		return null;
+		Code code = defaultResult();
+		for(SmalltalkParser.StatContext stat : ctx.stat())
+		{
+			code = aggregateResult(code,visit(stat));
+		}
+		return code;
 	}
 
 	@Override
@@ -98,7 +116,48 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		return code;
 	}
 
+	@Override
+	public Code visitKeywordSend(SmalltalkParser.KeywordSendContext ctx) {
+		Code code = visit(ctx.recv);
+		for(SmalltalkParser.BinaryExpressionContext arg : ctx.args)
+		{
+			code = aggregateResult(code,visit(arg));
+		}
+		code = sendKeywordMsg(ctx.recv,code,ctx.args,ctx.KEYWORD());
+		return code;
+	}
 
+	@Override
+	public Code visitBinaryExpression(SmalltalkParser.BinaryExpressionContext ctx) {
+		Code code = visit(ctx.unaryExpression(0));
+		return code;
+	}
+
+	@Override
+	public Code visitUnaryIsPrimary(SmalltalkParser.UnaryIsPrimaryContext ctx) {
+		Code code = visit(ctx.primary());
+		return code;
+	}
+
+	@Override
+	public Code visitId(SmalltalkParser.IdContext ctx) {
+		int index = currentClassScope.stringTable.add(ctx.ID().getText());
+		Code code = Compiler.push_global(index);
+		return code;
+	}
+
+	@Override
+	public Code visitLiteral(SmalltalkParser.LiteralContext ctx) {
+		int literalIndex = getLiteralIndex(ctx.getText());
+		Code code = Compiler.push_literal(literalIndex);
+		return code;
+	}
+
+	@Override
+	public Code visitBlock(SmalltalkParser.BlockContext ctx) {
+		Code code = visit(ctx.body());
+		return code;
+	}
 
 	public void pushScope(Scope scope)
 	{
@@ -112,7 +171,9 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 	public int getLiteralIndex(String s)
 	{
-		return 0;
+		System.out.println(currentClassScope);
+		int index  = 0;
+		return index;
 	}
 
 	public Code store(String id)
@@ -130,7 +191,10 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 							   List<SmalltalkParser.BinaryExpressionContext> args,
 							   List<TerminalNode> keywords)
 	{
-		return null;
+		Code code = receiverCode;
+		Code e = Compiler.send(args.size(),currentClassScope.stringTable.add(keywords.get(0).getText()));
+		code = code.join(e);
+		return code;
 	}
 
 	public String getProgramSourceForSubtree(ParserRuleContext ctx) {
