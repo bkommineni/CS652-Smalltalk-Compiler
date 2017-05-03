@@ -142,7 +142,10 @@ public class Compiler {
 
 	public static Code push_nil() 				{ return Code.of(Bytecode.NIL); }
 	public static Code push_self()				{ return Code.of(Bytecode.SELF); }
+	public static Code push_true()				{ return Code.of(Bytecode.TRUE); }
+	public static Code push_false()				{ return Code.of(Bytecode.FALSE); }
 	public static Code method_return()          { return Code.of(Bytecode.RETURN); }
+	public static Code block_return()          { return Code.of(Bytecode.BLOCK_RETURN); }
 	public static Code push_int(int x)
 	{
 		return Code.of(Bytecode.PUSH_INT).join(intToBytes(x));
