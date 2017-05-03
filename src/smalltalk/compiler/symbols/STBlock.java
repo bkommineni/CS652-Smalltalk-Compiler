@@ -97,7 +97,7 @@ public class STBlock extends MethodSymbol {
 	 */
 	public int getLocalIndex(String name) {
 
-		STVariable stVariable = (STVariable) this.resolve(name);
+		VariableSymbol stVariable = (VariableSymbol) this.resolve(name);
 
 		return stVariable.getInsertionOrderNumber();
 	}

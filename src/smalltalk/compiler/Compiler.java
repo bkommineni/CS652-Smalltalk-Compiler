@@ -168,7 +168,7 @@ public class Compiler {
 	}
 	public static Code store_local(int context,int index)
 	{
-		return Code.of(Bytecode.STORE_FIELD).join(shortToBytes(context)).join(shortToBytes(index));
+		return Code.of(Bytecode.STORE_LOCAL).join(shortToBytes(context)).join(shortToBytes(index));
 	}
 	public static Code push_literal(int literalIndex)
 	{
