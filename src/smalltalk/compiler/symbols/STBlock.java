@@ -119,6 +119,6 @@ public class STBlock extends MethodSymbol {
 				getRelativeScopeCount(name);
 			}
 		}
-		return 0;
+		return -1;
 	}
 }
