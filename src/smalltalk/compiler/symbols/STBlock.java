@@ -2,7 +2,13 @@ package smalltalk.compiler.symbols;
 
 import org.antlr.symtab.MethodSymbol;
 import org.antlr.symtab.Scope;
+import org.antlr.symtab.Symbol;
+import org.antlr.symtab.VariableSymbol;
 import org.antlr.v4.runtime.ParserRuleContext;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /** A block is an anonymous method defined within a method or another block.
  *  Ala gnu impl., blocks aren't stored en masse inline.
@@ -42,6 +48,10 @@ public class STBlock extends MethodSymbol {
 
 	public STCompiledBlock compiledBlock;
 
+	int scopeCount = 0;
+
+	Scope currentScope = this;
+
 	/** Used by subclass STMethod */
 	protected STBlock(String name, ParserRuleContext tree) {
 		super(name);
@@ -58,9 +68,27 @@ public class STBlock extends MethodSymbol {
 
 	public boolean isMethod() { return false; }
 
-	public int nargs() { return 0; } // fill in
+	public int nargs()
+	{
+		int nargs = 0;
+		for(Symbol symbol : this.getSymbols())
+		{
+			if(symbol instanceof STArg)
+				nargs++;
+		}
+		return nargs;
+	}
 
-	public int nlocals() { return 0; } // fill in
+	public int nlocals()
+	{
+		int nlocals = 0;
+		for(Symbol symbol : this.getSymbols())
+		{
+			if(symbol instanceof STVariable)
+				nlocals++;
+		}
+		return nlocals;
+	}
 
 	/** Given the name of a local variable or argument, return the index from 0.
 	 *  The arguments come first and then the locals. For example,
@@ -68,8 +96,10 @@ public class STBlock extends MethodSymbol {
 	 *  has  indexes x@0, y@1, a@x.
 	 */
 	public int getLocalIndex(String name) {
-		// fill in
-		return 0;
+
+		STVariable stVariable = (STVariable) this.resolve(name);
+
+		return stVariable.getInsertionOrderNumber();
 	}
 
 	/** Look for name in current block; keep looking upwards in
@@ -77,7 +107,18 @@ public class STBlock extends MethodSymbol {
 	 *  jump to find name. 0 indicates same scope.
 	 */
 	public int getRelativeScopeCount(String name) {
-		// fill in
+
+		for(Symbol symbol : currentScope.getSymbols())
+		{
+			if(symbol.getName().equals(name))
+				return scopeCount;
+			else
+			{
+				scopeCount++;
+				currentScope = currentScope.getEnclosingScope();
+				getRelativeScopeCount(name);
+			}
+		}
 		return 0;
 	}
 }
