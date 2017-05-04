@@ -7,14 +7,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import smalltalk.compiler.symbols.STArg;
-import smalltalk.compiler.symbols.STBlock;
-import smalltalk.compiler.symbols.STClass;
-import smalltalk.compiler.symbols.STField;
-import smalltalk.compiler.symbols.STMethod;
-import smalltalk.compiler.symbols.STPrimitiveMethod;
-import smalltalk.compiler.symbols.STSymbolTable;
-import smalltalk.compiler.symbols.STVariable;
+import smalltalk.compiler.symbols.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;

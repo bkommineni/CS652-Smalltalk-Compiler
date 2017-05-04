@@ -110,15 +110,15 @@ public class STBlock extends MethodSymbol {
 
 		for(Symbol symbol : currentScope.getSymbols())
 		{
-			if(symbol.getName().equals(name))
+			if (symbol.getName().equals(name))
 				return scopeCount;
-			else
-			{
-				scopeCount++;
-				currentScope = currentScope.getEnclosingScope();
-				getRelativeScopeCount(name);
-			}
 		}
+		scopeCount++;
+		currentScope = currentScope.getEnclosingScope();
+		if(currentScope != null)
+			getRelativeScopeCount(name);
+		else
+			return -1;
 		return -1;
 	}
 }
