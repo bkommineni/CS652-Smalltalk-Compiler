@@ -116,9 +116,12 @@ public class STBlock extends MethodSymbol {
 		scopeCount++;
 		currentScope = currentScope.getEnclosingScope();
 		if(currentScope != null)
+		{
 			getRelativeScopeCount(name);
+			return scopeCount;
+		}
 		else
 			return -1;
-		return -1;
+
 	}
 }
