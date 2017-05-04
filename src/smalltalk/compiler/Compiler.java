@@ -186,6 +186,12 @@ public class Compiler {
 		return Code.of(Bytecode.BLOCK).join(shortToBytes(blocknum));
 	}
 
+	public static Code send_super(int nargs,int index)
+	{
+		Code code = Code.of(Bytecode.SEND_SUPER).join(shortToBytes(nargs)).join(toLiteral(index));
+		return code;
+	}
+
 	public String getFileName() {
 		return fileName;
 	}

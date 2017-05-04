@@ -164,6 +164,51 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	}
 
 	@Override
+	public Code visitOperatorMethod(SmalltalkParser.OperatorMethodContext ctx) {
+		return super.visitOperatorMethod(ctx);
+	}
+
+	@Override
+	public Code visitKeywordMethod(SmalltalkParser.KeywordMethodContext ctx) {
+		Code code = Code.None;
+		currentScope = ctx.scope;
+		int blockindex = 0;
+		STMethod stMethod = ctx.scope;
+		STCompiledBlock block = new STCompiledBlock(currentClassScope, (STBlock) currentScope);
+		block.blocks = new STCompiledBlock[stMethod.getAllNestedScopedSymbols().size()];
+		code = aggregateResult(code,visit(ctx.methodBlock()));
+
+		for (Scope symbol : stMethod.getAllNestedScopedSymbols())
+		{
+			STCompiledBlock stCompiledBlock = new STCompiledBlock(currentClassScope, (STBlock) symbol);
+			stCompiledBlock.bytecode = ((STBlock) symbol).compiledBlock.bytecode;
+			block.blocks[blockindex] = stCompiledBlock;
+			blockindex++;
+		}
+
+		ctx.scope.compiledBlock = block;
+		ctx.scope.compiledBlock.bytecode = code.bytes();
+		popScope();
+		return code;
+	}
+
+	@Override
+	public Code visitUnaryMsgSend(SmalltalkParser.UnaryMsgSendContext ctx) {
+		Code code = Code.None;
+		code = aggregateResult(code,visit(ctx.unaryExpression()));
+		code = aggregateResult(code,Compiler.send(0,currentClassScope.stringTable.add(ctx.ID().getText())));
+		return code;
+	}
+
+	@Override
+	public Code visitUnarySuperMsgSend(SmalltalkParser.UnarySuperMsgSendContext ctx) {
+		Code code = Code.None;
+		code = aggregateResult(code,Compiler.push_self());
+		code = aggregateResult(code,Compiler.send_super(0,currentClassScope.stringTable.add(ctx.ID().getText())));
+		return code;
+	}
+
+	@Override
 	public Code visitSmalltalkMethodBlock(SmalltalkParser.SmalltalkMethodBlockContext ctx) {
 		Code code = visit(ctx.body());
 		code = aggregateResult(code, Compiler.push_self());
@@ -274,8 +319,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 		if(ctx.sym instanceof STField)
 		{
-			STField stField = (STField) ctx.sym;
-			System.out.println(stField.getInsertionOrderNumber());
 			code = Compiler.push_field(ctx.sym.getInsertionOrderNumber());
 		}
 		else if((ctx.sym instanceof STVariable) || (ctx.sym instanceof STArg))
@@ -283,7 +326,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			STBlock stBlock = (STBlock) currentScope;
 			index = stBlock.getLocalIndex(ctx.ID().getText());
 			int relScopeCount = stBlock.getRelativeScopeCount(ctx.ID().getText());
-			code = Compiler.push_local(relScopeCount,index);
+			code = Compiler.push_local(relScopeCount, index);
 		}
 		else
 		{
