@@ -237,6 +237,20 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	@Override
 	public Code visitBinaryExpression(SmalltalkParser.BinaryExpressionContext ctx) {
 		Code code = visit(ctx.unaryExpression(0));
+		for(int i=0;i<ctx.bop().size();i++)
+		{
+			System.out.println(ctx.bop(i).getText());
+		}
+		if(ctx.unaryExpression().size() > 0)
+		{
+			for (int i = 1; i < ctx.unaryExpression().size(); i++)
+			{
+				code = aggregateResult(code, visit(ctx.unaryExpression(i)));
+				int index = currentClassScope.stringTable.add(ctx.bop(i - 1).getText());
+				code = aggregateResult(code,Compiler.send(1,index));
+			}
+		}
+
 		return code;
 	}
 
@@ -260,9 +274,11 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 		if(ctx.sym instanceof STField)
 		{
+			STField stField = (STField) ctx.sym;
+			System.out.println(stField.getInsertionOrderNumber());
 			code = Compiler.push_field(ctx.sym.getInsertionOrderNumber());
 		}
-		else if(ctx.sym instanceof STVariable)
+		else if((ctx.sym instanceof STVariable) || (ctx.sym instanceof STArg))
 		{
 			STBlock stBlock = (STBlock) currentScope;
 			index = stBlock.getLocalIndex(ctx.ID().getText());
@@ -338,19 +354,8 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 	@Override
 	public Code visitPassThrough(SmalltalkParser.PassThroughContext ctx) {
-		Code recvCode = visit(ctx.recv);
 		Code code = Code.None;
-		int noOfArgs = ctx.binaryExpression().unaryExpression().size()-1;
-		if(ctx.binaryExpression().unaryExpression(1) != null)
-		{
-			code = aggregateResult(code,visit(ctx.binaryExpression().unaryExpression(1)));
-		}
-		if(ctx.binaryExpression().bop().size() > 0)
-		{
-			int index = currentClassScope.stringTable.add(ctx.binaryExpression().bop(0).getText());
-			code = aggregateResult(code,Compiler.send(noOfArgs,index));
-		}
-		code = aggregateResult(recvCode,code);
+		code = aggregateResult(code,visit(ctx.binaryExpression()));
 		return code;
 	}
 
@@ -386,7 +391,12 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 							   List<TerminalNode> keywords)
 	{
 		Code code = receiverCode;
-		Code e = Compiler.send(args.size(),currentClassScope.stringTable.add(keywords.get(0).getText()));
+		StringBuffer buffer = new StringBuffer();
+		for (int i=0;i<keywords.size();i++)
+		{
+			buffer.append(keywords.get(i).getText());
+		}
+		Code e = Compiler.send(args.size(),currentClassScope.stringTable.add(buffer.toString()));
 		code = aggregateResult(code,e);
 		return code;
 	}
