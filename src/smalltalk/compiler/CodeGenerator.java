@@ -89,7 +89,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			}
 			ctx.scope.compiledBlock = block;
 			popScope();
-			code = aggregateResult(code, Compiler.pop());
 			code = aggregateResult(code, Compiler.push_self());
 			code = aggregateResult(code, Compiler.method_return());
 			ctx.scope.compiledBlock.bytecode = code.bytes();
@@ -121,8 +120,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		}
 		if((currentScope instanceof STMethod))
 		{
-			if(!currentScope.getName().equals("main"))
-				code = aggregateResult(code, Compiler.pop());
+			code = aggregateResult(code, Compiler.pop());
 		}
 		return code;
 	}
@@ -207,11 +205,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	}
 
 	@Override
-	public Code visitSuperKeywordSend(SmalltalkParser.SuperKeywordSendContext ctx) {
-		return super.visitSuperKeywordSend(ctx);
-	}
-
-	@Override
 	public Code visitUnarySuperMsgSend(SmalltalkParser.UnarySuperMsgSendContext ctx) {
 		Code code = Code.None;
 		code = aggregateResult(code,Compiler.push_self());
@@ -225,12 +218,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		code = aggregateResult(code, Compiler.push_self());
 		code = aggregateResult(code, Compiler.method_return());
 		return code;
-	}
-
-	@Override
-	public Code visitPrimitiveMethodBlock(SmalltalkParser.PrimitiveMethodBlockContext ctx)
-	{
-		return Code.None;
 	}
 
 	@Override

@@ -50,7 +50,7 @@ public class Compiler {
 	public ParserRuleContext parseClasses(CharStream input) {
 		SmalltalkLexer l = new SmalltalkLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(l);
-		System.out.println(tokens.getTokens());
+		//System.out.println(tokens.getTokens());
 
 		this.parser = new SmalltalkParser(tokens);
 		fileTree= parser.file();
