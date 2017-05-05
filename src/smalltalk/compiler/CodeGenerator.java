@@ -6,13 +6,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.stringtemplate.v4.ST;
 import smalltalk.compiler.symbols.*;
-
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
-
-import static smalltalk.compiler.DefineSymbols.getTextValues;
-import static smalltalk.compiler.misc.Utils.shortToBytes;
 
 /** Fill STBlock, STMethod objects in Symbol table with bytecode,
  * {@link STCompiledBlock}.
@@ -433,14 +427,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 		if(ctx.binaryExpression().bop().size() > 0)
 		{
-			/*Code left = visit(ctx.binaryExpression().getChild(0));
-			Code right = visit(ctx.binaryExpression().getChild(2));
-			int index = currentClassScope.stringTable.add(ctx.binaryExpression().getChild(1).getText());
-			Code send = Compiler.send(1,index);
-
-			code = aggregateResult(code,left);
-			code = aggregateResult(code,right);
-			code = aggregateResult(code,send);*/
 			code = aggregateResult(code,visit(ctx.binaryExpression().unaryExpression(0)));
 			if(ctx.binaryExpression().unaryExpression().size() > 0)
 			{
@@ -457,17 +443,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			Code recv = visit(ctx.recv);
 			code = aggregateResult(code,recv);
 		}
-
-		/*code = aggregateResult(code,visit(ctx.binaryExpression().unaryExpression(0)));
-		if(ctx.binaryExpression().unaryExpression().size() > 0)
-		{
-			for (int i = 1; i < ctx.binaryExpression().unaryExpression().size(); i++)
-			{
-				code = aggregateResult(code, visit(ctx.binaryExpression().unaryExpression(i)));
-				int index = currentClassScope.stringTable.add(ctx.binaryExpression().bop(i - 1).getText());
-				code = aggregateResult(code,Compiler.send(1,index));
-			}
-		}*/
 		return code;
 	}
 

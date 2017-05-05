@@ -1,9 +1,6 @@
 package smalltalk.compiler.symbols;
 
-import org.antlr.symtab.MethodSymbol;
-import org.antlr.symtab.Scope;
-import org.antlr.symtab.Symbol;
-import org.antlr.symtab.VariableSymbol;
+import org.antlr.symtab.*;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
@@ -48,9 +45,9 @@ public class STBlock extends MethodSymbol {
 
 	public STCompiledBlock compiledBlock;
 
-	int scopeCount = 0;
+	Scope currentScope;
 
-	Scope currentScope = this;
+	int scopeCount = 0;
 
 	/** Used by subclass STMethod */
 	protected STBlock(String name, ParserRuleContext tree) {
@@ -108,6 +105,14 @@ public class STBlock extends MethodSymbol {
 	 */
 	public int getRelativeScopeCount(String name) {
 
+		this.currentScope = this;
+		this.scopeCount = 0;
+
+		return getScopeCount(name);
+	}
+
+	private int getScopeCount(String name)
+	{
 		for(Symbol symbol : currentScope.getSymbols())
 		{
 			if (symbol.getName().equals(name))
@@ -117,11 +122,10 @@ public class STBlock extends MethodSymbol {
 		currentScope = currentScope.getEnclosingScope();
 		if(currentScope != null)
 		{
-			getRelativeScopeCount(name);
+			getScopeCount(name);
 			return scopeCount;
 		}
 		else
 			return -1;
-
 	}
 }
