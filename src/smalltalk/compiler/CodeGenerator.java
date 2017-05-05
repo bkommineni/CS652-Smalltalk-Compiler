@@ -213,6 +213,11 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	}
 
 	@Override
+	public Code visitSuperKeywordSend(SmalltalkParser.SuperKeywordSendContext ctx) {
+		return super.visitSuperKeywordSend(ctx);
+	}
+
+	@Override
 	public Code visitUnarySuperMsgSend(SmalltalkParser.UnarySuperMsgSendContext ctx) {
 		Code code = Code.None;
 		code = aggregateResult(code,Compiler.push_self());
@@ -279,31 +284,15 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	@Override
 	public Code visitKeywordSend(SmalltalkParser.KeywordSendContext ctx) {
 		Code code = visit(ctx.recv);
-		//code = aggregateResult(code,visit(ctx.binaryExpression(1)));
+
 		for(SmalltalkParser.BinaryExpressionContext arg : ctx.args)
 		{
 			code = aggregateResult(code,visit(arg));
 		}
 		code = sendKeywordMsg(ctx.recv,code,ctx.args,ctx.KEYWORD());
+
 		return code;
 	}
-
-	/*@Override
-	public Code visitBinaryExpression(SmalltalkParser.BinaryExpressionContext ctx) {
-		//Code code = visit(ctx.unaryExpression(0));
-		Code code = Code.None;
-		if(ctx.unaryExpression().size() > 0)
-		{
-			for (int i = 1; i < ctx.unaryExpression().size(); i++)
-			{
-				code = aggregateResult(code, visit(ctx.unaryExpression(i)));
-				int index = currentClassScope.stringTable.add(ctx.bop(i - 1).getText());
-				code = aggregateResult(code,Compiler.send(1,index));
-			}
-		}
-
-		return code;
-	}*/
 
 	@Override
 	public Code visitBop(SmalltalkParser.BopContext ctx) {
@@ -326,7 +315,17 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 		if(ctx.sym instanceof STField)
 		{
-			code = Compiler.push_field(ctx.sym.getInsertionOrderNumber());
+			STClass stClass = currentClassScope;
+			if(stClass.getSuperClassScope() != null)
+			{
+				int superclassfields  = stClass.getSuperClassScope().getDefinedFields().size();
+				int i=0;
+				for(FieldSymbol field : stClass.getDefinedFields())
+				{
+					field.setInsertionOrderNumber(superclassfields+i);
+				}
+			}
+			code = Compiler.push_field(currentClassScope.getFieldIndex(ctx.sym.getName()));
 		}
 		else if((ctx.sym instanceof STVariable) || (ctx.sym instanceof STArg))
 		{
@@ -405,7 +404,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	@Override
 	public Code visitPassThrough(SmalltalkParser.PassThroughContext ctx) {
 		Code code = Code.None;
-		//code = aggregateResult(code,visit(ctx.recv));
+
 		code = aggregateResult(code,visit(ctx.binaryExpression().unaryExpression(0)));
 		if(ctx.binaryExpression().unaryExpression().size() > 0)
 		{
