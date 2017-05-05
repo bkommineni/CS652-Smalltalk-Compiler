@@ -284,13 +284,34 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	@Override
 	public Code visitKeywordSend(SmalltalkParser.KeywordSendContext ctx) {
 		Code code = visit(ctx.recv);
-
 		for(SmalltalkParser.BinaryExpressionContext arg : ctx.args)
 		{
 			code = aggregateResult(code,visit(arg));
 		}
 		code = sendKeywordMsg(ctx.recv,code,ctx.args,ctx.KEYWORD());
 
+		return code;
+	}
+
+	@Override
+	public Code visitBinaryExpression(SmalltalkParser.BinaryExpressionContext ctx) {
+
+		Code code = Code.None;
+		if(ctx.unaryExpression().size() > 1)
+			{
+			Code left = visit(ctx.getChild(0));
+			Code right = visit(ctx.getChild(2));
+			int index = currentClassScope.stringTable.add(ctx.getChild(1).getText());
+			Code send = Compiler.send(1,index);
+
+			code = aggregateResult(code,left);
+			code = aggregateResult(code,right);
+			code = aggregateResult(code,send);
+		}
+		else
+		{
+			code = visitChildren(ctx);
+		}
 		return code;
 	}
 
@@ -410,7 +431,34 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	public Code visitPassThrough(SmalltalkParser.PassThroughContext ctx) {
 		Code code = Code.None;
 
-		code = aggregateResult(code,visit(ctx.binaryExpression().unaryExpression(0)));
+		if(ctx.binaryExpression().bop().size() > 0)
+		{
+			/*Code left = visit(ctx.binaryExpression().getChild(0));
+			Code right = visit(ctx.binaryExpression().getChild(2));
+			int index = currentClassScope.stringTable.add(ctx.binaryExpression().getChild(1).getText());
+			Code send = Compiler.send(1,index);
+
+			code = aggregateResult(code,left);
+			code = aggregateResult(code,right);
+			code = aggregateResult(code,send);*/
+			code = aggregateResult(code,visit(ctx.binaryExpression().unaryExpression(0)));
+			if(ctx.binaryExpression().unaryExpression().size() > 0)
+			{
+				for (int i = 1; i < ctx.binaryExpression().unaryExpression().size(); i++)
+				{
+					code = aggregateResult(code, visit(ctx.binaryExpression().unaryExpression(i)));
+					int index = currentClassScope.stringTable.add(ctx.binaryExpression().bop(i - 1).getText());
+					code = aggregateResult(code,Compiler.send(1,index));
+				}
+			}
+		}
+		else
+		{
+			Code recv = visit(ctx.recv);
+			code = aggregateResult(code,recv);
+		}
+
+		/*code = aggregateResult(code,visit(ctx.binaryExpression().unaryExpression(0)));
 		if(ctx.binaryExpression().unaryExpression().size() > 0)
 		{
 			for (int i = 1; i < ctx.binaryExpression().unaryExpression().size(); i++)
@@ -419,7 +467,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 				int index = currentClassScope.stringTable.add(ctx.binaryExpression().bop(i - 1).getText());
 				code = aggregateResult(code,Compiler.send(1,index));
 			}
-		}
+		}*/
 		return code;
 	}
 
