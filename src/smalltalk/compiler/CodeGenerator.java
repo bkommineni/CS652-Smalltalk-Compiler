@@ -308,6 +308,17 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		return code;
 	}
 
+	private void setSuperClassFields()
+	{
+		STClass stClass = currentClassScope;
+		int superclassfields  = stClass.getSuperClassScope().getDefinedFields().size();
+		int i=0;
+		for(FieldSymbol field : stClass.getDefinedFields())
+		{
+			field.setInsertionOrderNumber(superclassfields+i);
+		}
+	}
+
 	@Override
 	public Code visitId(SmalltalkParser.IdContext ctx) {
 		Code code = Code.None;
@@ -315,15 +326,9 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 		if(ctx.sym instanceof STField)
 		{
-			STClass stClass = currentClassScope;
-			if(stClass.getSuperClassScope() != null)
+			if(currentClassScope.getSuperClassScope() != null)
 			{
-				int superclassfields  = stClass.getSuperClassScope().getDefinedFields().size();
-				int i=0;
-				for(FieldSymbol field : stClass.getDefinedFields())
-				{
-					field.setInsertionOrderNumber(superclassfields+i);
-				}
+				setSuperClassFields();
 			}
 			code = Compiler.push_field(currentClassScope.getFieldIndex(ctx.sym.getName()));
 		}
