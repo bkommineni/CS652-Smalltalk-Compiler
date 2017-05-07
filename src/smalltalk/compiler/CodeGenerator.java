@@ -188,7 +188,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	public Code visitUnaryMsgSend(SmalltalkParser.UnaryMsgSendContext ctx) {
 		Code code = Code.None;
 		code = aggregateResult(code,visit(ctx.unaryExpression()));
-		code = aggregateResult(code,Compiler.send(0,currentClassScope.stringTable.add(ctx.ID().getText())));
+		code = aggregateResult(code,Compiler.send(0,getLiteralIndex(ctx.ID().getText())));
 		return code;
 	}
 
@@ -196,7 +196,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 	public Code visitUnarySuperMsgSend(SmalltalkParser.UnarySuperMsgSendContext ctx) {
 		Code code = Code.None;
 		code = aggregateResult(code,Compiler.push_self());
-		code = aggregateResult(code,Compiler.send_super(0,currentClassScope.stringTable.add(ctx.ID().getText())));
+		code = aggregateResult(code,Compiler.send_super(0,getLiteralIndex(ctx.ID().getText())));
 		return code;
 	}
 
@@ -259,7 +259,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 
 	@Override
 	public Code visitBop(SmalltalkParser.BopContext ctx) {
-		int index = currentClassScope.stringTable.add(ctx.getText());
+		int index = getLiteralIndex(ctx.getText());
 		Code send = Compiler.send(1,index);
 		return send;
 	}
@@ -297,7 +297,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		}
 		else
 		{
-			index = currentClassScope.stringTable.add(ctx.ID().getText());
+			index = getLiteralIndex(ctx.ID().getText());
 			code = Compiler.push_global(index);
 		}
 		return code;
@@ -411,7 +411,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		{
 			buffer.append(keywords.get(i).getText());
 		}
-		Code e = Compiler.send(args.size(),currentClassScope.stringTable.add(buffer.toString()));
+		Code e = Compiler.send(args.size(),getLiteralIndex(buffer.toString()));
 		code = aggregateResult(code,e);
 		return code;
 	}

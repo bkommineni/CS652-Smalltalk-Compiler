@@ -45,10 +45,6 @@ public class STBlock extends MethodSymbol {
 
 	public STCompiledBlock compiledBlock;
 
-	Scope currentScope;
-
-	int scopeCount = 0;
-
 	/** Used by subclass STMethod */
 	protected STBlock(String name, ParserRuleContext tree) {
 		super(name);
@@ -105,27 +101,19 @@ public class STBlock extends MethodSymbol {
 	 */
 	public int getRelativeScopeCount(String name) {
 
-		this.currentScope = this;
-		this.scopeCount = 0;
+		Scope scope = this;
+		int scopeCount = 0;
 
-		return getScopeCount(name);
-	}
-
-	private int getScopeCount(String name)
-	{
-		for(Symbol symbol : currentScope.getSymbols())
+		while(scope != null)
 		{
-			if (symbol.getName().equals(name))
-				return scopeCount;
+			for(Symbol symbol : scope.getSymbols())
+			{
+				if (symbol.getName().equals(name))
+					return scopeCount;
+			}
+			scopeCount++;
+			scope = scope.getEnclosingScope();
 		}
-		scopeCount++;
-		currentScope = currentScope.getEnclosingScope();
-		if(currentScope != null)
-		{
-			getScopeCount(name);
-			return scopeCount;
-		}
-		else
-			return -1;
+		return -1;
 	}
 }
