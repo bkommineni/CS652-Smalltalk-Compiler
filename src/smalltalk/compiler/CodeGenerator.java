@@ -89,6 +89,7 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			}
 			ctx.scope.compiledBlock = block;
 			popScope();
+			code = aggregateResult(code,Compiler.pop());
 			code = aggregateResult(code, Compiler.push_self());
 			code = aggregateResult(code, Compiler.method_return());
 			ctx.scope.compiledBlock.bytecode = code.bytes();
@@ -118,10 +119,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			if(i!=statSize)
 				code = aggregateResult(code,Compiler.pop());
 		}
-		if((currentScope instanceof STMethod))
-		{
-			code = aggregateResult(code, Compiler.pop());
-		}
 		return code;
 	}
 
@@ -141,7 +138,20 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			block.blocks[blockindex] = stCompiledBlock;
 			blockindex++;
 		}
-
+		if(ctx.methodBlock() instanceof SmalltalkParser.SmalltalkMethodBlockContext)
+		{
+			if(ctx.methodBlock().getChild(1) instanceof SmalltalkParser.EmptyBodyContext)
+			{
+				code = aggregateResult(code, Compiler.push_self());
+				code = aggregateResult(code, Compiler.method_return());
+			}
+			else
+			{
+				code = aggregateResult(code,Compiler.pop());
+				code = aggregateResult(code,Compiler.push_self());
+				code = aggregateResult(code,Compiler.method_return());
+			}
+		}
 		ctx.scope.compiledBlock = block;
 		ctx.scope.compiledBlock.bytecode = code.bytes();
 		popScope();
@@ -165,7 +175,20 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			block.blocks[blockindex] = stCompiledBlock;
 			blockindex++;
 		}
-
+		if(ctx.methodBlock() instanceof SmalltalkParser.SmalltalkMethodBlockContext)
+		{
+			if(ctx.methodBlock().getChild(1) instanceof SmalltalkParser.EmptyBodyContext)
+			{
+				code = aggregateResult(code, Compiler.push_self());
+				code = aggregateResult(code, Compiler.method_return());
+			}
+			else
+			{
+				code = aggregateResult(code,Compiler.pop());
+				code = aggregateResult(code,Compiler.push_self());
+				code = aggregateResult(code,Compiler.method_return());
+			}
+		}
 		ctx.scope.compiledBlock = block;
 		ctx.scope.compiledBlock.bytecode = code.bytes();
 		popScope();
@@ -189,11 +212,24 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			block.blocks[blockindex] = stCompiledBlock;
 			blockindex++;
 		}
-
+		if(ctx.methodBlock() instanceof SmalltalkParser.SmalltalkMethodBlockContext)
+		{
+			if(ctx.methodBlock().getChild(1) instanceof SmalltalkParser.EmptyBodyContext)
+			{
+				code = aggregateResult(code, Compiler.push_self());
+				code = aggregateResult(code, Compiler.method_return());
+			}
+			else
+			{
+				code = aggregateResult(code,Compiler.pop());
+				code = aggregateResult(code,Compiler.push_self());
+				code = aggregateResult(code,Compiler.method_return());
+			}
+		}
 		ctx.scope.compiledBlock = block;
 		ctx.scope.compiledBlock.bytecode = code.bytes();
 		popScope();
-		return code;
+		return Code.None;
 	}
 
 	@Override
@@ -209,14 +245,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		Code code = Code.None;
 		code = aggregateResult(code,Compiler.push_self());
 		code = aggregateResult(code,Compiler.send_super(0,currentClassScope.stringTable.add(ctx.ID().getText())));
-		return code;
-	}
-
-	@Override
-	public Code visitSmalltalkMethodBlock(SmalltalkParser.SmalltalkMethodBlockContext ctx) {
-		Code code = visit(ctx.body());
-		code = aggregateResult(code, Compiler.push_self());
-		code = aggregateResult(code, Compiler.method_return());
 		return code;
 	}
 
@@ -240,16 +268,6 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 			int relScopeCount  = stBlock.getRelativeScopeCount(ctx.sym.getName());
 			int localIndex = stBlock.getLocalIndex(ctx.sym.getName());
 			code = Compiler.store_local(relScopeCount,localIndex);
-		}
-		return code;
-	}
-
-	@Override
-	public Code visitEmptyBody(SmalltalkParser.EmptyBodyContext ctx) {
-		Code code = Code.None;
-		if(currentClassScope.getName().equals("MainClass"))
-		{
-			code = Compiler.push_nil();
 		}
 		return code;
 	}
@@ -401,6 +419,10 @@ public class CodeGenerator extends SmalltalkBaseVisitor<Code> {
 		STBlock stBlock = (STBlock)currentScope;
 		Code blockd = Compiler.block(stBlock.index);
 		Code code = visit(ctx.body());
+		if(ctx.body() instanceof SmalltalkParser.EmptyBodyContext)
+		{
+			code = aggregateResult(code,Compiler.push_nil());
+		}
 		code = aggregateResult(code,Compiler.block_return());
 		ctx.scope.compiledBlock = new STCompiledBlock(currentClassScope,(STBlock) currentScope);
 		ctx.scope.compiledBlock.bytecode = code.bytes();
